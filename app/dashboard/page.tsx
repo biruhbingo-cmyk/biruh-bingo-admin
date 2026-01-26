@@ -157,9 +157,9 @@ export default function DashboardPage() {
       <div className="space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard Overview</h1>
-            <p className="text-muted-foreground">Monitor pending transactions and system metrics</p>
+        <div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard Overview</h1>
+          <p className="text-muted-foreground">Monitor pending transactions and system metrics</p>
           </div>
           <Button
             variant="outline"
@@ -260,7 +260,7 @@ export default function DashboardPage() {
             <div className="text-center py-8 text-muted-foreground">
               <p className="text-sm">No recent activity data available</p>
               <p className="text-xs mt-2">Activity tracking requires additional API endpoints</p>
-            </div>
+              </div>
           </div>
         </Card>
       </div>

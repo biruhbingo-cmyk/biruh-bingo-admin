@@ -455,10 +455,10 @@ export default function TransactionsPage() {
       <div className="space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Transactions</h1>
-            <p className="text-muted-foreground">Manage and approve pending transactions</p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Transactions</h1>
+          <p className="text-muted-foreground">Manage and approve pending transactions</p>
+        </div>
           <Button
             variant="outline"
             size="sm"
@@ -515,36 +515,36 @@ export default function TransactionsPage() {
 
                 {(['all', 'deposit', 'withdraw', 'transfer'] as const).map((type) => (
                   <TabsContent key={type} value={type}>
-                {/* Transactions Table */}
-                <Card className="bg-secondary/50 border-border/50 overflow-hidden">
-                  <div className="overflow-x-auto">
+        {/* Transactions Table */}
+        <Card className="bg-secondary/50 border-border/50 overflow-hidden">
+          <div className="overflow-x-auto">
                     {loading ? (
                       <div className="p-8 text-center text-muted-foreground">
                         Loading transactions...
                       </div>
                     ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="border-b border-border/50 hover:bg-transparent">
-                            <TableHead className="text-foreground">Transaction ID</TableHead>
-                            <TableHead className="text-foreground">User ID</TableHead>
-                            <TableHead className="text-foreground">Type</TableHead>
-                            <TableHead className="text-foreground">Amount</TableHead>
-                            <TableHead className="text-foreground">Status</TableHead>
-                            <TableHead className="text-foreground">Date</TableHead>
-                            <TableHead className="text-right text-foreground">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredTransactions.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b border-border/50 hover:bg-transparent">
+                  <TableHead className="text-foreground">Transaction ID</TableHead>
+                  <TableHead className="text-foreground">User ID</TableHead>
+                  <TableHead className="text-foreground">Type</TableHead>
+                  <TableHead className="text-foreground">Amount</TableHead>
+                  <TableHead className="text-foreground">Status</TableHead>
+                  <TableHead className="text-foreground">Date</TableHead>
+                  <TableHead className="text-right text-foreground">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTransactions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                                 {searchTerm ? 'No transactions match your search' : 'No transactions found'}
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            filteredTransactions.map((tx) => (
-                              <TableRow key={tx.id} className="border-b border-border/50 hover:bg-primary/5">
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredTransactions.map((tx) => (
+                    <TableRow key={tx.id} className="border-b border-border/50 hover:bg-primary/5">
                                 <TableCell className="text-foreground">
                                   {tx.transaction_id ? (
                                     <div className="flex items-center gap-2">
@@ -572,7 +572,7 @@ export default function TransactionsPage() {
                                   )}
                                 </TableCell>
                                 <TableCell className="text-foreground font-mono text-xs">{tx.user_id.slice(0, 8)}...</TableCell>
-                                <TableCell className="text-foreground">{getTypeLabel(tx.type)}</TableCell>
+                      <TableCell className="text-foreground">{getTypeLabel(tx.type)}</TableCell>
                                 <TableCell className="text-foreground">
                                   <div className="flex flex-col">
                                     <span className="font-semibold">${tx.amount.toFixed(2)}</span>
@@ -583,48 +583,48 @@ export default function TransactionsPage() {
                                     )}
                                   </div>
                                 </TableCell>
-                                <TableCell>{getStatusBadge(tx.status)}</TableCell>
-                                <TableCell className="text-muted-foreground text-sm">
-                                  {new Date(tx.created_at).toLocaleDateString()}
-                                </TableCell>
-                                <TableCell className="text-right">
+                      <TableCell>{getStatusBadge(tx.status)}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {new Date(tx.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
                                   {tx.status === 'pending' && (tx.type === 'deposit' || tx.type === 'withdraw') && (
-                                    <div className="flex justify-end gap-2">
-                                      <Button
-                                        size="sm"
-                                        className="bg-green-500/20 hover:bg-green-500/30 text-green-400"
-                                        onClick={() => handleApprove(tx.id, tx.type)}
-                                      >
-                                        Approve
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        className="bg-red-500/20 hover:bg-red-500/30 text-red-400"
-                                        onClick={() => handleReject(tx.id, tx.type)}
-                                      >
-                                        Reject
-                                      </Button>
-                                    </div>
-                                  )}
-                                  {tx.status !== 'pending' && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
-                                    </Badge>
-                                  )}
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              className="bg-green-500/20 hover:bg-green-500/30 text-green-400"
+                              onClick={() => handleApprove(tx.id, tx.type)}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="bg-red-500/20 hover:bg-red-500/30 text-red-400"
+                              onClick={() => handleReject(tx.id, tx.type)}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                        {tx.status !== 'pending' && (
+                          <Badge variant="secondary" className="text-xs">
+                            {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
+                          </Badge>
+                        )}
                                   {tx.status === 'pending' && (tx.type === 'transfer_in' || tx.type === 'transfer_out') && (
                                     <Badge variant="secondary" className="text-xs">
                                       Auto-completed
                                     </Badge>
                                   )}
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          )}
-                        </TableBody>
-                      </Table>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
                     )}
-                  </div>
-                </Card>
+          </div>
+        </Card>
                   </TabsContent>
                 ))}
               </Tabs>
