@@ -5,10 +5,12 @@ import React from "react"
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { useAuth } from '@/lib/auth-context';
 import { API_ENDPOINTS } from '@/lib/api-config';
+import { apiFetch, formatCurrency } from '@/lib/api-client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight, ArrowDownLeft, TrendingUp, Users, RefreshCw, DollarSign, Gamepad2, Activity, Coins } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface DashboardStats {
   pending_deposits: number;
@@ -31,7 +33,8 @@ interface DashboardStatsResponse {
 }
 
 export default function DashboardPage() {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
     pending_deposits: 0,
     pending_withdrawals: 0,
@@ -54,11 +57,14 @@ export default function DashboardPage() {
   const checkSystemHealth = async (token: string): Promise<'healthy' | 'degraded' | 'down'> => {
     try {
       const startTime = Date.now();
-      const response = await fetch(API_ENDPOINTS.admin.getDashboardStats(), {
+      const response = await apiFetch(API_ENDPOINTS.admin.getDashboardStats(), {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+      }, () => {
+        logout();
+        router.push('/login');
       });
       const responseTime = Date.now() - startTime;
 
@@ -86,11 +92,14 @@ export default function DashboardPage() {
       setError(null);
 
       const startTime = Date.now();
-      const response = await fetch(API_ENDPOINTS.admin.getDashboardStats(), {
+      const response = await apiFetch(API_ENDPOINTS.admin.getDashboardStats(), {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+      }, () => {
+        logout();
+        router.push('/login');
       });
       const responseTime = Date.now() - startTime;
 
@@ -160,14 +169,6 @@ export default function DashboardPage() {
     </Card>
   );
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  };
 
   const getHealthColor = (health: string) => {
     switch (health) {

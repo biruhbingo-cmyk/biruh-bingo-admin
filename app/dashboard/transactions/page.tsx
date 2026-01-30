@@ -3,7 +3,9 @@
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { useAuth } from '@/lib/auth-context';
 import { API_ENDPOINTS } from '@/lib/api-config';
+import { apiFetch, formatCurrency } from '@/lib/api-client';
 import { Card } from '@/components/ui/card';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -51,7 +53,8 @@ interface TransactionsResponse {
 }
 
 export default function TransactionsPage() {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
+  const router = useRouter();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusTab, setStatusTab] = useState<'all' | 'pending' | 'completed' | 'failed'>('pending');
@@ -96,18 +99,18 @@ export default function TransactionsPage() {
       if (statusTab === 'pending') {
         // Fetch both pending deposits and withdrawals
         const [depositsRes, withdrawalsRes] = await Promise.all([
-          fetch(API_ENDPOINTS.admin.getPendingDeposits(100, 0), {
+          apiFetch(API_ENDPOINTS.admin.getPendingDeposits(100, 0), {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
-          }),
-          fetch(API_ENDPOINTS.admin.getPendingWithdrawals(100, 0), {
+          }, () => { logout(); router.push('/login'); }),
+          apiFetch(API_ENDPOINTS.admin.getPendingWithdrawals(100, 0), {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
-          }),
+          }, () => { logout(); router.push('/login'); }),
         ]);
 
         let depositsData: TransactionsResponse = { transactions: [], count: 0, limit: 100, offset: 0 };
@@ -148,18 +151,18 @@ export default function TransactionsPage() {
       } else if (statusTab === 'completed') {
         // Fetch both completed deposits and withdrawals
         const [depositsRes, withdrawalsRes] = await Promise.all([
-          fetch(API_ENDPOINTS.admin.getCompletedDeposits(100, 0), {
+          apiFetch(API_ENDPOINTS.admin.getCompletedDeposits(100, 0), {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
-          }),
-          fetch(API_ENDPOINTS.admin.getCompletedWithdrawals(100, 0), {
+          }, () => { logout(); router.push('/login'); }),
+          apiFetch(API_ENDPOINTS.admin.getCompletedWithdrawals(100, 0), {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
-          }),
+          }, () => { logout(); router.push('/login'); }),
         ]);
 
         let depositsData: TransactionsResponse = { transactions: [], count: 0, limit: 100, offset: 0 };
@@ -204,12 +207,12 @@ export default function TransactionsPage() {
           return;
         }
 
-        const response = await fetch(endpoint, {
+        const response = await apiFetch(endpoint, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-        });
+        }, () => { logout(); router.push('/login'); });
 
         if (!response.ok) {
           throw new Error('Failed to fetch transactions');
@@ -245,13 +248,13 @@ export default function TransactionsPage() {
           ? API_ENDPOINTS.admin.approveDeposit(transactionId)
           : API_ENDPOINTS.admin.approveWithdrawal(transactionId);
 
-      const response = await fetch(endpoint, {
+      const response = await apiFetch(endpoint, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-      });
+      }, () => { logout(); router.push('/login'); });
 
       if (response.ok) {
         // Clear any previous errors
@@ -280,13 +283,13 @@ export default function TransactionsPage() {
           ? API_ENDPOINTS.admin.rejectDeposit(transactionId)
           : API_ENDPOINTS.admin.rejectWithdrawal(transactionId);
 
-      const response = await fetch(endpoint, {
+      const response = await apiFetch(endpoint, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-      });
+      }, () => { logout(); router.push('/login'); });
 
       if (response.ok) {
         // Clear any previous errors
@@ -409,12 +412,12 @@ export default function TransactionsPage() {
       // Fetch balances for all pending withdrawal users in parallel
       const balancePromises = pendingWithdrawalUserIds.map(async (userId) => {
         try {
-          const response = await fetch(API_ENDPOINTS.wallet.getByUserId(userId), {
+          const response = await apiFetch(API_ENDPOINTS.wallet.getByUserId(userId), {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
-          });
+          }, () => { logout(); router.push('/login'); });
 
           if (response.ok) {
             const json = await response.json();
@@ -575,10 +578,10 @@ export default function TransactionsPage() {
                       <TableCell className="text-foreground">{getTypeLabel(tx.type)}</TableCell>
                                 <TableCell className="text-foreground">
                                   <div className="flex flex-col">
-                                    <span className="font-semibold">${tx.amount.toFixed(2)}</span>
+                                    <span className="font-semibold">{formatCurrency(tx.amount)}</span>
                                     {tx.status === 'pending' && tx.type === 'withdraw' && userBalances[tx.user_id] !== undefined && (
                                       <span className="text-xs text-muted-foreground mt-1">
-                                        Balance: ${userBalances[tx.user_id].toFixed(2)}
+                                        Balance: {formatCurrency(userBalances[tx.user_id])}
                                       </span>
                                     )}
                                   </div>
@@ -690,7 +693,7 @@ export default function TransactionsPage() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Amount</p>
-                    <p className="text-foreground font-semibold">${selectedTransaction.amount.toFixed(2)}</p>
+                    <p className="text-foreground font-semibold">{formatCurrency(selectedTransaction.amount)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Status</p>

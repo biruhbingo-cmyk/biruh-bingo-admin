@@ -3,7 +3,9 @@
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { useAuth } from '@/lib/auth-context';
 import { API_ENDPOINTS } from '@/lib/api-config';
+import { apiFetch, formatCurrency } from '@/lib/api-client';
 import { Card } from '@/components/ui/card';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -44,7 +46,8 @@ interface UsersResponse {
 }
 
 export default function UsersPage() {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,11 +70,14 @@ export default function UsersPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(API_ENDPOINTS.admin.getAllUsers(limit, offset), {
+      const response = await apiFetch(API_ENDPOINTS.admin.getAllUsers(limit, offset), {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+      }, () => {
+        logout();
+        router.push('/login');
       });
 
       if (!response.ok) {
@@ -103,15 +109,6 @@ export default function UsersPage() {
 
   const totalBalance = users.reduce((sum, user) => sum + (user.wallet?.balance || 0), 0);
   const avgBalance = users.length > 0 ? totalBalance / users.length : 0;
-
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  };
 
   const totalPages = Math.ceil(totalCount / limit);
   const currentPage = Math.floor(offset / limit) + 1;
