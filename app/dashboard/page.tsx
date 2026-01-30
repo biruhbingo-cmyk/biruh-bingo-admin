@@ -265,7 +265,7 @@ export default function DashboardPage() {
           <StatCard
             icon={<Gamepad2 className="w-6 h-6 text-primary" />}
             label="Total Games Played"
-            value={loading ? '...' : totalGames - 7}
+            value={loading ? '...' : totalGames}
           />
         </div>
 
