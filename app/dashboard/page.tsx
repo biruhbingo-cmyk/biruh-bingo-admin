@@ -6,27 +6,44 @@ import { DashboardLayout } from '@/components/dashboard-layout';
 import { useAuth } from '@/lib/auth-context';
 import { API_ENDPOINTS } from '@/lib/api-config';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowUpRight, ArrowDownLeft, TrendingUp, Users, RefreshCw } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, TrendingUp, Users, RefreshCw, DollarSign, Gamepad2, Activity, Coins } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 interface DashboardStats {
-  pendingDeposits: number;
-  pendingWithdrawals: number;
-  totalUsers: number;
-  totalTransactions: number;
+  pending_deposits: number;
+  pending_withdrawals: number;
+  total_users: number;
+  total_transactions: number;
+  total_balance: number;
+  games_by_type: Record<string, number>;
+  total_house_cut: number;
+}
+
+interface DashboardStatsResponse {
+  pending_deposits: number;
+  pending_withdrawals: number;
+  total_users: number;
+  total_transactions: number;
+  total_balance: number;
+  games_by_type: Record<string, number>;
+  total_house_cut: number;
 }
 
 export default function DashboardPage() {
   const { token } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
-    pendingDeposits: 0,
-    pendingWithdrawals: 0,
-    totalUsers: 0,
-    totalTransactions: 0,
+    pending_deposits: 0,
+    pending_withdrawals: 0,
+    total_users: 0,
+    total_transactions: 0,
+    total_balance: 0,
+    games_by_type: {},
+    total_house_cut: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [systemHealth, setSystemHealth] = useState<'healthy' | 'degraded' | 'down'>('down');
 
   useEffect(() => {
     if (token) {
@@ -34,90 +51,81 @@ export default function DashboardPage() {
     }
   }, [token]);
 
+  const checkSystemHealth = async (token: string): Promise<'healthy' | 'degraded' | 'down'> => {
+    try {
+      const startTime = Date.now();
+      const response = await fetch(API_ENDPOINTS.admin.getDashboardStats(), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const responseTime = Date.now() - startTime;
+
+      if (response.ok) {
+        if (responseTime < 1000) {
+          return 'healthy';
+        } else if (responseTime < 3000) {
+          return 'degraded';
+        } else {
+          return 'degraded';
+        }
+      } else {
+        return 'degraded';
+      }
+    } catch {
+      return 'down';
+    }
+  };
+
   const loadStats = async () => {
     if (!token) return;
 
     try {
       setLoading(true);
+      setError(null);
 
-      // Fetch all data in parallel
-      const [usersRes, pendingDepositsRes, pendingWithdrawalsRes, allTransactionsRes] = await Promise.all([
-        fetch(API_ENDPOINTS.admin.getAllUsers(1, 0), {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-        fetch(API_ENDPOINTS.admin.getPendingDeposits(1, 0), {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-        fetch(API_ENDPOINTS.admin.getPendingWithdrawals(1, 0), {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-        fetch(API_ENDPOINTS.admin.getAllTransactions(1, 0), {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-      ]);
+      const startTime = Date.now();
+      const response = await fetch(API_ENDPOINTS.admin.getDashboardStats(), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const responseTime = Date.now() - startTime;
 
-      // Parse responses
-      let totalUsers = 0;
-      let pendingDeposits = 0;
-      let pendingWithdrawals = 0;
-      let totalTransactions = 0;
-
-      if (usersRes.ok) {
-        try {
-          const usersData = await usersRes.json();
-          totalUsers = usersData.count || 0;
-        } catch (e) {
-          console.error('Failed to parse users response:', e);
+      // Update system health based on response time
+      if (response.ok) {
+        if (responseTime < 1000) {
+          setSystemHealth('healthy');
+        } else if (responseTime < 3000) {
+          setSystemHealth('degraded');
+        } else {
+          setSystemHealth('degraded');
         }
+      } else {
+        setSystemHealth('degraded');
       }
 
-      if (pendingDepositsRes.ok) {
-        try {
-          const depositsData = await pendingDepositsRes.json();
-          pendingDeposits = depositsData.count || 0;
-        } catch (e) {
-          console.error('Failed to parse pending deposits response:', e);
-        }
+      if (!response.ok) {
+        throw new Error(`Failed to fetch dashboard stats: ${response.status}`);
       }
 
-      if (pendingWithdrawalsRes.ok) {
-        try {
-          const withdrawalsData = await pendingWithdrawalsRes.json();
-          pendingWithdrawals = withdrawalsData.count || 0;
-        } catch (e) {
-          console.error('Failed to parse pending withdrawals response:', e);
-        }
-      }
-
-      if (allTransactionsRes.ok) {
-        try {
-          const transactionsData = await allTransactionsRes.json();
-          totalTransactions = transactionsData.count || 0;
-        } catch (e) {
-          console.error('Failed to parse transactions response:', e);
-        }
-      }
+      const data: DashboardStatsResponse = await response.json();
 
       setStats({
-        pendingDeposits,
-        pendingWithdrawals,
-        totalUsers,
-        totalTransactions,
+        pending_deposits: data.pending_deposits || 0,
+        pending_withdrawals: data.pending_withdrawals || 0,
+        total_users: data.total_users || 0,
+        total_transactions: data.total_transactions || 0,
+        total_balance: data.total_balance || 0,
+        games_by_type: data.games_by_type || {},
+        total_house_cut: data.total_house_cut || 0,
       });
     } catch (error) {
       console.error('Failed to load stats:', error);
+      setError('Failed to load dashboard data. Please try again.');
+      setSystemHealth('down');
     } finally {
       setLoading(false);
     }
@@ -132,7 +140,7 @@ export default function DashboardPage() {
   }: {
     icon: React.ReactNode;
     label: string;
-    value: string | number;
+    value: string | number | React.ReactNode;
     change?: string;
     changeType?: 'up' | 'down';
   }) => (
@@ -140,7 +148,7 @@ export default function DashboardPage() {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-muted-foreground mb-1">{label}</p>
-          <p className="text-3xl font-bold text-foreground">{value}</p>
+          <div className="text-3xl font-bold text-foreground">{value}</div>
           {change && (
             <p className={`text-xs mt-2 ${changeType === 'up' ? 'text-green-400' : 'text-orange-400'}`}>
               {changeType === 'up' ? '↑' : '↓'} {change}
@@ -152,14 +160,51 @@ export default function DashboardPage() {
     </Card>
   );
 
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  const getHealthColor = (health: string) => {
+    switch (health) {
+      case 'healthy':
+        return 'bg-green-500';
+      case 'degraded':
+        return 'bg-yellow-500';
+      case 'down':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const getHealthText = (health: string) => {
+    switch (health) {
+      case 'healthy':
+        return 'Healthy';
+      case 'degraded':
+        return 'Degraded';
+      case 'down':
+        return 'Down';
+      default:
+        return 'Unknown';
+    }
+  };
+
+  const totalGames = Object.values(stats.games_by_type).reduce((sum, count) => sum + count, 0);
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard Overview</h1>
-          <p className="text-muted-foreground">Monitor pending transactions and system metrics</p>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard Overview</h1>
+            <p className="text-muted-foreground">Monitor pending transactions and system metrics</p>
           </div>
           <Button
             variant="outline"
@@ -173,94 +218,72 @@ export default function DashboardPage() {
           </Button>
         </div>
 
-        {/* Stats Grid */}
+        {error && (
+          <Card className="p-4 bg-destructive/10 border-destructive/20">
+            <p className="text-sm text-destructive">{error}</p>
+          </Card>
+        )}
+
+        {/* Main Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             icon={<ArrowDownLeft className="w-6 h-6 text-primary" />}
             label="Pending Deposits"
-            value={loading ? '...' : stats.pendingDeposits}
+            value={loading ? '...' : stats.pending_deposits}
           />
           <StatCard
             icon={<ArrowUpRight className="w-6 h-6 text-primary" />}
             label="Pending Withdrawals"
-            value={loading ? '...' : stats.pendingWithdrawals}
+            value={loading ? '...' : stats.pending_withdrawals}
           />
           <StatCard
             icon={<Users className="w-6 h-6 text-primary" />}
             label="Total Users"
-            value={loading ? '...' : stats.totalUsers}
+            value={loading ? '...' : stats.total_users}
           />
           <StatCard
             icon={<TrendingUp className="w-6 h-6 text-primary" />}
             label="Total Transactions"
-            value={loading ? '...' : stats.totalTransactions}
+            value={loading ? '...' : stats.total_transactions}
           />
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="p-6 bg-secondary/50 border-border/50">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-foreground">Action Needed</h3>
-              <Badge variant="destructive" className="bg-destructive/20 text-destructive">
-                {stats.pendingDeposits + stats.pendingWithdrawals}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              There are pending transactions requiring your attention
-            </p>
-            <Button 
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-              onClick={() => window.location.href = '/dashboard/transactions'}
-            >
-              Review Transactions
-            </Button>
-          </Card>
-
-          <Card className="p-6 bg-secondary/50 border-border/50">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-foreground">System Status</h3>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                <span className="text-xs text-green-400">Online</span>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">All systems operational</p>
-            <Button variant="outline" className="w-full bg-transparent">
-              View Details
-            </Button>
-          </Card>
-
-          <Card className="p-6 bg-secondary/50 border-border/50">
-            <h3 className="font-semibold text-foreground mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                  View User List
-                </Button>
-              </li>
-              <li>
-                <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                  Transaction History
-                </Button>
-              </li>
-              <li>
-                <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                  System Settings
-                </Button>
-              </li>
-            </ul>
-          </Card>
+        {/* Additional Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            icon={<DollarSign className="w-6 h-6 text-primary" />}
+            label="Total Money in System"
+            value={loading ? '...' : formatCurrency(stats.total_balance)}
+          />
+          <StatCard
+            icon={<Coins className="w-6 h-6 text-primary" />}
+            label="Total House Cut"
+            value={loading ? '...' : formatCurrency(stats.total_house_cut)}
+          />
+  
+          <StatCard
+            icon={<Gamepad2 className="w-6 h-6 text-primary" />}
+            label="Total Games Played"
+            value={loading ? '...' : totalGames - 7}
+          />
         </div>
 
-        {/* Recent Activity */}
+        {/* Games by Type */}
         <Card className="p-6 bg-secondary/50 border-border/50">
-          <h3 className="font-semibold text-foreground mb-4">Recent Activity</h3>
-          <div className="space-y-3">
-            <div className="text-center py-8 text-muted-foreground">
-              <p className="text-sm">No recent activity data available</p>
-              <p className="text-xs mt-2">Activity tracking requires additional API endpoints</p>
-              </div>
+          <h3 className="font-semibold text-foreground mb-4">Games Played by Type</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            {['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'].map((gameType) => {
+              const count = stats.games_by_type?.[gameType] ?? 0;
+              const displayCount = Math.max(0, count - 1);
+              return (
+                <div key={gameType} className="text-center p-3 rounded-lg bg-background/50">
+                  <p className="text-xs text-muted-foreground mb-1">{gameType}</p>
+                  <p className="text-xl font-bold text-foreground">
+                    {loading ? '...' : displayCount}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </Card>
       </div>

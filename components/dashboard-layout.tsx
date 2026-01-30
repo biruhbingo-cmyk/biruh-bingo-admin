@@ -4,7 +4,7 @@ import React from "react"
 
 import { useAuth } from '@/lib/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, LayoutGrid, Users, CreditCard, Settings } from 'lucide-react';
+import { LogOut, LayoutGrid, Users, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -46,7 +46,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
     { href: '/dashboard/transactions', label: 'Transactions', icon: CreditCard },
     { href: '/dashboard/users', label: 'Users', icon: Users },
-    { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ];
 
   return (

@@ -31,6 +31,16 @@ export const API_ENDPOINTS = {
     approveWithdrawal: (id: string) => buildUrl(API_BASE_URL, 'api', 'v1', 'admin', 'transactions', id, 'approve-withdrawal'),
     rejectWithdrawal: (id: string) => buildUrl(API_BASE_URL, 'api', 'v1', 'admin', 'transactions', id, 'reject-withdrawal'),
     cancelTransaction: (id: string) => buildUrl(API_BASE_URL, 'api', 'v1', 'admin', 'transactions', id, 'cancel'),
+    // Stats endpoints
+    getDashboardStats: () => buildUrl(API_BASE_URL, 'api', 'v1', 'admin', 'stats', 'dashboard'),
+  },
+  games: {
+    getAvailableGames: (type?: string) => {
+      const url = buildUrl(API_BASE_URL, 'api', 'v1', 'games');
+      return type ? `${url}?type=${type}` : url;
+    },
+    getGameState: (gameId: string) => buildUrl(API_BASE_URL, 'api', 'v1', 'games', gameId, 'state'),
+    getUserHistory: (userId: string, limit = 10, offset = 0) => `${buildUrl(API_BASE_URL, 'api', 'v1', 'games', 'user', userId, 'history')}?limit=${limit}&offset=${offset}`,
   },
   user: {
     register: buildUrl(API_BASE_URL, 'api', 'v1', 'user', 'register'),
