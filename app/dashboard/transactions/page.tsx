@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/tabs';
 import { CheckCircle, XCircle, Clock, Search, RefreshCw, Copy, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Dialog,
   DialogContent,
@@ -55,6 +56,7 @@ interface TransactionsResponse {
 export default function TransactionsPage() {
   const { token, logout } = useAuth();
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusTab, setStatusTab] = useState<'all' | 'pending' | 'completed' | 'failed'>('pending');
@@ -382,6 +384,21 @@ export default function TransactionsPage() {
     }
   };
 
+  const getStatusIndicator = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <div className="w-2 h-2 rounded-full bg-yellow-400" title="Pending" />;
+      case 'completed':
+        return <div className="w-2 h-2 rounded-full bg-green-400" title="Completed" />;
+      case 'failed':
+        return <div className="w-2 h-2 rounded-full bg-red-400" title="Failed" />;
+      case 'cancelled':
+        return <div className="w-2 h-2 rounded-full bg-gray-400" title="Cancelled" />;
+      default:
+        return <div className="w-2 h-2 rounded-full bg-gray-400" title={status} />;
+    }
+  };
+
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       deposit: 'Deposit',
@@ -457,17 +474,17 @@ export default function TransactionsPage() {
     <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Transactions</h1>
-          <p className="text-muted-foreground">Manage and approve pending transactions</p>
-        </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Transactions</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Manage and approve pending transactions</p>
+          </div>
           <Button
             variant="outline"
             size="sm"
             onClick={loadTransactions}
             disabled={loading}
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -498,35 +515,176 @@ export default function TransactionsPage() {
 
         {/* Status Tabs */}
         <Tabs value={statusTab} onValueChange={(value) => setStatusTab(value as typeof statusTab)} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
-            <TabsTrigger value="failed">Failed</TabsTrigger>
-            <TabsTrigger value="all">All</TabsTrigger>
-          </TabsList>
+          {isMobile ? (
+            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+              <Button
+                variant={statusTab === 'pending' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusTab('pending')}
+                className="flex-shrink-0"
+              >
+                Pending
+              </Button>
+              <Button
+                variant={statusTab === 'completed' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusTab('completed')}
+                className="flex-shrink-0"
+              >
+                Completed
+              </Button>
+              <Button
+                variant={statusTab === 'failed' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusTab('failed')}
+                className="flex-shrink-0"
+              >
+                Failed
+              </Button>
+              <Button
+                variant={statusTab === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusTab('all')}
+                className="flex-shrink-0"
+              >
+                All
+              </Button>
+            </div>
+          ) : (
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="pending" className="text-xs sm:text-sm">Pending</TabsTrigger>
+              <TabsTrigger value="completed" className="text-xs sm:text-sm">Completed</TabsTrigger>
+              <TabsTrigger value="failed" className="text-xs sm:text-sm">Failed</TabsTrigger>
+              <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
+            </TabsList>
+          )}
 
           {(['pending', 'completed', 'failed', 'all'] as const).map((status) => (
             <TabsContent key={status} value={status} className="mt-6">
               {/* Type Tabs within Status Tab */}
               <Tabs value={typeTab} onValueChange={(value) => setTypeTab(value as typeof typeTab)} className="w-full">
-                <TabsList className="grid w-full grid-cols-4 mb-6">
-                  <TabsTrigger value="all">All Types</TabsTrigger>
-                  <TabsTrigger value="deposit">Deposits</TabsTrigger>
-                  <TabsTrigger value="withdraw">Withdrawals</TabsTrigger>
-                  <TabsTrigger value="transfer">Transfers</TabsTrigger>
-                </TabsList>
+                {isMobile ? (
+                  <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                    <Button
+                      variant={typeTab === 'all' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTypeTab('all')}
+                      className="flex-shrink-0"
+                    >
+                      All Types
+                    </Button>
+                    <Button
+                      variant={typeTab === 'deposit' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTypeTab('deposit')}
+                      className="flex-shrink-0"
+                    >
+                      Deposits
+                    </Button>
+                    <Button
+                      variant={typeTab === 'withdraw' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTypeTab('withdraw')}
+                      className="flex-shrink-0"
+                    >
+                      Withdrawals
+                    </Button>
+                    <Button
+                      variant={typeTab === 'transfer' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTypeTab('transfer')}
+                      className="flex-shrink-0"
+                    >
+                      Transfers
+                    </Button>
+                  </div>
+                ) : (
+                  <TabsList className="grid w-full grid-cols-4 mb-6">
+                    <TabsTrigger value="all" className="text-xs sm:text-sm">All Types</TabsTrigger>
+                    <TabsTrigger value="deposit" className="text-xs sm:text-sm">Deposits</TabsTrigger>
+                    <TabsTrigger value="withdraw" className="text-xs sm:text-sm">Withdrawals</TabsTrigger>
+                    <TabsTrigger value="transfer" className="text-xs sm:text-sm">Transfers</TabsTrigger>
+                  </TabsList>
+                )}
 
                 {(['all', 'deposit', 'withdraw', 'transfer'] as const).map((type) => (
                   <TabsContent key={type} value={type}>
-        {/* Transactions Table */}
-        <Card className="bg-secondary/50 border-border/50 overflow-hidden">
-          <div className="overflow-x-auto">
-                    {loading ? (
-                      <div className="p-8 text-center text-muted-foreground">
-                        Loading transactions...
+                    {/* Transactions - Mobile Card View */}
+                    {isMobile ? (
+                      <div className="space-y-4">
+                        {loading ? (
+                          <Card className="p-8 text-center text-muted-foreground">
+                            Loading transactions...
+                          </Card>
+                        ) : filteredTransactions.length === 0 ? (
+                          <Card className="p-8 text-center text-muted-foreground">
+                            {searchTerm ? 'No transactions match your search' : 'No transactions found'}
+                          </Card>
+                        ) : (
+                          filteredTransactions.map((tx) => (
+                            <Card key={tx.id} className="p-4 bg-secondary/50 border-border/50">
+                              <div className="space-y-3">
+                                {/* First Row: Type, ID, and Amount */}
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-semibold text-foreground text-sm">{getTypeLabel(tx.type)}</p>
+                                      {getStatusIndicator(tx.status)}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground font-mono break-all mt-1">
+                                      {tx.transaction_id || tx.id.slice(0, 8) + '...'}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-lg font-bold text-foreground">{formatCurrency(tx.amount)}</p>
+                                  </div>
+                                </div>
+
+                                {/* Third Row: Action Buttons (if pending) */}
+                                {tx.status === 'pending' && (tx.type === 'deposit' || tx.type === 'withdraw') && (
+                                  <div className="flex gap-2 pt-2 border-t border-border/50">
+                                    <Button
+                                      size="sm"
+                                      className="flex-1 bg-green-500/20 hover:bg-green-500/30 text-green-400"
+                                      onClick={() => handleApprove(tx.id, tx.type)}
+                                    >
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="flex-1 text-destructive border-destructive/20 hover:bg-destructive/10"
+                                      onClick={() => handleReject(tx.id, tx.type)}
+                                    >
+                                      Reject
+                                    </Button>
+                                  </div>
+                                )}
+
+                                {/* View Details Button */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full"
+                                  onClick={() => setSelectedTransaction(tx)}
+                                >
+                                  View Details
+                                </Button>
+                              </div>
+                            </Card>
+                          ))
+                        )}
                       </div>
                     ) : (
-            <Table>
+                      /* Transactions - Desktop Table View */
+                      <Card className="bg-secondary/50 border-border/50 overflow-hidden">
+                        <div className="overflow-x-auto">
+                          {loading ? (
+                            <div className="p-8 text-center text-muted-foreground">
+                              Loading transactions...
+                            </div>
+                          ) : (
+                            <Table>
               <TableHeader>
                 <TableRow className="border-b border-border/50 hover:bg-transparent">
                   <TableHead className="text-foreground">Transaction ID</TableHead>
@@ -625,9 +783,10 @@ export default function TransactionsPage() {
                 )}
               </TableBody>
             </Table>
+                          )}
+                        </div>
+                      </Card>
                     )}
-          </div>
-        </Card>
                   </TabsContent>
                 ))}
               </Tabs>
@@ -637,14 +796,14 @@ export default function TransactionsPage() {
 
         {/* Transaction ID Dialog */}
         <Dialog open={!!selectedTransaction} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Transaction Details</DialogTitle>
               <DialogDescription>Full transaction information</DialogDescription>
             </DialogHeader>
             {selectedTransaction && (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Transaction ID</p>
                     <div className="flex items-center gap-2">

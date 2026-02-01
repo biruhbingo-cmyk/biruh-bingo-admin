@@ -202,17 +202,17 @@ export default function DashboardPage() {
     <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard Overview</h1>
-            <p className="text-muted-foreground">Monitor pending transactions and system metrics</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Dashboard Overview</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Monitor pending transactions and system metrics</p>
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={loadStats}
             disabled={loading}
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -270,9 +270,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Games by Type */}
-        <Card className="p-6 bg-secondary/50 border-border/50">
-          <h3 className="font-semibold text-foreground mb-4">Games Played by Type</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <Card className="p-4 sm:p-6 bg-secondary/50 border-border/50">
+          <h3 className="font-semibold text-foreground mb-4 text-sm sm:text-base">Games Played by Type</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-4">
             {['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'].map((gameType) => {
               const count = stats.games_by_type?.[gameType] ?? 0;
               const displayCount = Math.max(0, count);

@@ -4,16 +4,19 @@ import React from "react"
 
 import { useAuth } from '@/lib/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, LayoutGrid, Users, CreditCard } from 'lucide-react';
+import { LogOut, LayoutGrid, Users, CreditCard, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     setMounted(true);
@@ -24,6 +27,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       router.push('/login');
     }
   }, [user, loading, mounted, router]);
+
+  // Close sidebar when route changes on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [pathname, isMobile]);
 
   if (!mounted || loading) {
     return (
@@ -50,8 +60,45 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-sidebar border-b border-border/50 flex items-center justify-between px-4 z-50">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="text-foreground"
+          >
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </Button>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+              <span className="text-primary font-bold text-sm">⚡</span>
+            </div>
+            <div>
+              <h1 className="text-sm font-bold text-sidebar-foreground">Admin</h1>
+            </div>
+          </div>
+        </div>
+        <h2 className="text-sm font-semibold text-foreground">
+          {navItems.find((item) => item.href === pathname)?.label || 'Dashboard'}
+        </h2>
+      </div>
+
+      {/* Sidebar Overlay (Mobile) */}
+      {sidebarOpen && isMobile && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-border/50 flex flex-col">
+      <aside
+        className={`fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-border/50 flex flex-col z-50 transition-transform duration-300 ${
+          isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'
+        }`}
+      >
         {/* Logo */}
         <div className="p-6 border-b border-border/50">
           <div className="flex items-center gap-3">
@@ -66,12 +113,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (
-              <Link key={item.href} href={item.href}>
+              <Link key={item.href} href={item.href} onClick={() => isMobile && setSidebarOpen(false)}>
                 <Button
                   variant={isActive ? 'default' : 'ghost'}
                   className={`w-full justify-start gap-3 ${
@@ -109,16 +156,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="ml-64 min-h-screen">
-        {/* Top Bar */}
-        <div className="sticky top-0 h-16 bg-background/80 backdrop-blur-sm border-b border-border/50 flex items-center px-8 z-40">
+      <main className={`min-h-screen transition-all duration-300 ${
+        isMobile ? 'pt-16' : 'ml-64'
+      }`}>
+        {/* Top Bar (Desktop) */}
+        <div className="hidden lg:flex sticky top-0 h-16 bg-background/80 backdrop-blur-sm border-b border-border/50 items-center px-8 z-40">
           <h2 className="text-lg font-semibold text-foreground">
             {navItems.find((item) => item.href === pathname)?.label || 'Dashboard'}
           </h2>
         </div>
 
         {/* Content */}
-        <div className="p-8">{children}</div>
+        <div className="p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
     </div>
   );

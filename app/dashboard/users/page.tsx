@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { Search, Plus, TrendingUp, Wallet, Users as UsersIcon, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface User {
   id: string;
@@ -48,6 +49,7 @@ interface UsersResponse {
 export default function UsersPage() {
   const { token, logout } = useAuth();
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -129,17 +131,17 @@ export default function UsersPage() {
     <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">User Management</h1>
-            <p className="text-muted-foreground">View and manage user accounts and wallets</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">User Management</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">View and manage user accounts and wallets</p>
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={loadUsers}
             disabled={loading}
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -214,152 +216,311 @@ export default function UsersPage() {
           </div>
         </Card>
 
-        {/* Users Table */}
-        <Card className="bg-secondary/50 border-border/50 overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b border-border/50 hover:bg-transparent">
-                  <TableHead className="text-foreground">Name</TableHead>
-                  <TableHead className="text-foreground">Telegram ID</TableHead>
-                  <TableHead className="text-foreground">Phone</TableHead>
-                  <TableHead className="text-foreground">Referral Code</TableHead>
-                  <TableHead className="text-foreground">Wallet Balance</TableHead>
-                  <TableHead className="text-foreground">Role</TableHead>
-                  <TableHead className="text-foreground">Joined</TableHead>
-                  <TableHead className="text-right text-foreground">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      Loading users...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredUsers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      {searchTerm ? 'No users found matching your search' : 'No users found'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <TableRow key={user.id} className="border-b border-border/50 hover:bg-primary/5">
-                      <TableCell className="text-foreground font-medium">
-                        {user.first_name} {user.last_name}
-                      </TableCell>
-                      <TableCell className="text-foreground font-mono">{user.telegram_id}</TableCell>
-                      <TableCell className="text-foreground">{user.phone_number}</TableCell>
-                      <TableCell className="text-foreground font-mono">{user.referal_code}</TableCell>
-                      <TableCell className="text-foreground font-bold">
-                        {formatCurrency(user.wallet?.balance || 0)}
-                      </TableCell>
-                      <TableCell className="text-foreground">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          user.role === 'admin' 
-                            ? 'bg-purple-500/20 text-purple-400' 
-                            : 'bg-blue-500/20 text-blue-400'
-                        }`}>
-                          {user.role}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {new Date(user.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setSelectedUser(user)}
-                            >
-                              View Details
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle>User Details</DialogTitle>
-                              <DialogDescription>
-                                {selectedUser?.first_name} {selectedUser?.last_name}
-                              </DialogDescription>
-                            </DialogHeader>
-                            {selectedUser && (
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-1">User ID</p>
-                                    <p className="text-foreground font-mono text-sm">{selectedUser.id}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-1">Telegram ID</p>
-                                    <p className="text-foreground font-medium">{selectedUser.telegram_id}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-1">Phone</p>
-                                    <p className="text-foreground font-medium">{selectedUser.phone_number}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-1">Referral Code</p>
-                                    <p className="text-foreground font-mono">{selectedUser.referal_code}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-1">Role</p>
-                                    <p className="text-foreground font-medium">
-                                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                        selectedUser.role === 'admin' 
-                                          ? 'bg-purple-500/20 text-purple-400' 
-                                          : 'bg-blue-500/20 text-blue-400'
-                                      }`}>
-                                        {selectedUser.role}
-                                      </span>
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-1">Wallet Balance</p>
-                                    <p className="text-foreground font-bold text-lg">
-                                      {formatCurrency(selectedUser.wallet?.balance || 0)}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-1">Demo Balance</p>
-                                    <p className="text-foreground font-medium">
-                                      {formatCurrency(selectedUser.wallet?.demo_balance || 0)}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-1">Joined</p>
-                                    <p className="text-foreground font-medium">
-                                      {new Date(selectedUser.created_at).toLocaleString()}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-1">Last Updated</p>
-                                    <p className="text-foreground font-medium">
-                                      {new Date(selectedUser.updated_at).toLocaleString()}
-                                    </p>
-                                  </div>
-                                  {selectedUser.wallet && (
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Wallet Last Updated</p>
-                                      <p className="text-foreground font-medium">
-                                        {new Date(selectedUser.wallet.updated_at).toLocaleString()}
-                                      </p>
-                                    </div>
-                                  )}
+        {/* Users - Mobile Card View */}
+        {isMobile ? (
+          <>
+            <div className="space-y-4">
+              {loading ? (
+                <Card className="p-8 text-center text-muted-foreground">
+                  Loading users...
+                </Card>
+              ) : filteredUsers.length === 0 ? (
+                <Card className="p-8 text-center text-muted-foreground">
+                  {searchTerm ? 'No users found matching your search' : 'No users found'}
+                </Card>
+              ) : (
+                filteredUsers.map((user) => (
+                  <Card key={user.id} className="p-4 bg-secondary/50 border-border/50">
+                    <div className="space-y-3">
+                      {/* First Row: Name, ID, and Balance */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground text-sm">
+                            {user.first_name} {user.last_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-mono mt-1">
+                            ID: {user.telegram_id}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-foreground">{formatCurrency(user.wallet?.balance || 0)}</p>
+                        </div>
+                      </div>
+
+                      {/* View Details Button */}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => setSelectedUser(user)}
+                          >
+                            View Details
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>User Details</DialogTitle>
+                            <DialogDescription>
+                              {selectedUser?.first_name} {selectedUser?.last_name}
+                            </DialogDescription>
+                          </DialogHeader>
+                          {selectedUser && (
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-1">User ID</p>
+                                  <p className="text-foreground font-mono text-sm break-all">{selectedUser.id}</p>
                                 </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-1">Telegram ID</p>
+                                  <p className="text-foreground font-medium">{selectedUser.telegram_id}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-1">Phone</p>
+                                  <p className="text-foreground font-medium">{selectedUser.phone_number}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-1">Referral Code</p>
+                                  <p className="text-foreground font-mono">{selectedUser.referal_code}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-1">Role</p>
+                                  <p className="text-foreground font-medium">
+                                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                      selectedUser.role === 'admin' 
+                                        ? 'bg-purple-500/20 text-purple-400' 
+                                        : 'bg-blue-500/20 text-blue-400'
+                                    }`}>
+                                      {selectedUser.role}
+                                    </span>
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-1">Wallet Balance</p>
+                                  <p className="text-foreground font-bold text-lg">
+                                    {formatCurrency(selectedUser.wallet?.balance || 0)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-1">Demo Balance</p>
+                                  <p className="text-foreground font-medium">
+                                    {formatCurrency(selectedUser.wallet?.demo_balance || 0)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-1">Joined</p>
+                                  <p className="text-foreground font-medium">
+                                    {new Date(selectedUser.created_at).toLocaleString()}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-1">Last Updated</p>
+                                  <p className="text-foreground font-medium">
+                                    {new Date(selectedUser.updated_at).toLocaleString()}
+                                  </p>
+                                </div>
+                                {selectedUser.wallet && (
+                                  <div>
+                                    <p className="text-xs text-muted-foreground mb-1">Wallet Last Updated</p>
+                                    <p className="text-foreground font-medium">
+                                      {new Date(selectedUser.wallet.updated_at).toLocaleString()}
+                                    </p>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </DialogContent>
-                        </Dialog>
+                            </div>
+                          )}
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+            
+            {/* Mobile Pagination */}
+            {!loading && totalCount > 0 && (
+              <div className="flex flex-col gap-4 pt-4">
+                <div className="text-sm text-muted-foreground text-center">
+                  Showing {offset + 1} to {Math.min(offset + limit, totalCount)} of {totalCount.toLocaleString()} users
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePreviousPage}
+                    disabled={offset === 0 || loading}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Previous
+                  </Button>
+                  <div className="text-sm text-muted-foreground px-4">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={offset + limit >= totalCount || loading}
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        ) : null}
+
+        {/* Users - Desktop Table View */}
+        {!isMobile && (
+          <Card className="bg-secondary/50 border-border/50 overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b border-border/50 hover:bg-transparent">
+                    <TableHead className="text-foreground">Name</TableHead>
+                    <TableHead className="text-foreground">Telegram ID</TableHead>
+                    <TableHead className="text-foreground">Phone</TableHead>
+                    <TableHead className="text-foreground">Referral Code</TableHead>
+                    <TableHead className="text-foreground">Wallet Balance</TableHead>
+                    <TableHead className="text-foreground">Role</TableHead>
+                    <TableHead className="text-foreground">Joined</TableHead>
+                    <TableHead className="text-right text-foreground">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        Loading users...
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ) : filteredUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        {searchTerm ? 'No users found matching your search' : 'No users found'}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <TableRow key={user.id} className="border-b border-border/50 hover:bg-primary/5">
+                        <TableCell className="text-foreground font-medium">
+                          {user.first_name} {user.last_name}
+                        </TableCell>
+                        <TableCell className="text-foreground font-mono">{user.telegram_id}</TableCell>
+                        <TableCell className="text-foreground">{user.phone_number}</TableCell>
+                        <TableCell className="text-foreground font-mono">{user.referal_code}</TableCell>
+                        <TableCell className="text-foreground font-bold">
+                          {formatCurrency(user.wallet?.balance || 0)}
+                        </TableCell>
+                        <TableCell className="text-foreground">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            user.role === 'admin' 
+                              ? 'bg-purple-500/20 text-purple-400' 
+                              : 'bg-blue-500/20 text-blue-400'
+                          }`}>
+                            {user.role}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setSelectedUser(user)}
+                              >
+                                View Details
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>User Details</DialogTitle>
+                                <DialogDescription>
+                                  {selectedUser?.first_name} {selectedUser?.last_name}
+                                </DialogDescription>
+                              </DialogHeader>
+                              {selectedUser && (
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                      <p className="text-xs text-muted-foreground mb-1">User ID</p>
+                                      <p className="text-foreground font-mono text-sm break-all">{selectedUser.id}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-muted-foreground mb-1">Telegram ID</p>
+                                      <p className="text-foreground font-medium">{selectedUser.telegram_id}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-muted-foreground mb-1">Phone</p>
+                                      <p className="text-foreground font-medium">{selectedUser.phone_number}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-muted-foreground mb-1">Referral Code</p>
+                                      <p className="text-foreground font-mono">{selectedUser.referal_code}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-muted-foreground mb-1">Role</p>
+                                      <p className="text-foreground font-medium">
+                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                          selectedUser.role === 'admin' 
+                                            ? 'bg-purple-500/20 text-purple-400' 
+                                            : 'bg-blue-500/20 text-blue-400'
+                                        }`}>
+                                          {selectedUser.role}
+                                        </span>
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-muted-foreground mb-1">Wallet Balance</p>
+                                      <p className="text-foreground font-bold text-lg">
+                                        {formatCurrency(selectedUser.wallet?.balance || 0)}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-muted-foreground mb-1">Demo Balance</p>
+                                      <p className="text-foreground font-medium">
+                                        {formatCurrency(selectedUser.wallet?.demo_balance || 0)}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-muted-foreground mb-1">Joined</p>
+                                      <p className="text-foreground font-medium">
+                                        {new Date(selectedUser.created_at).toLocaleString()}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-muted-foreground mb-1">Last Updated</p>
+                                      <p className="text-foreground font-medium">
+                                        {new Date(selectedUser.updated_at).toLocaleString()}
+                                      </p>
+                                    </div>
+                                    {selectedUser.wallet && (
+                                      <div>
+                                        <p className="text-xs text-muted-foreground mb-1">Wallet Last Updated</p>
+                                        <p className="text-foreground font-medium">
+                                          {new Date(selectedUser.wallet.updated_at).toLocaleString()}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
 
           {/* Pagination */}
           {!loading && totalCount > 0 && (
@@ -393,6 +554,7 @@ export default function UsersPage() {
             </div>
           )}
         </Card>
+        )}
       </div>
     </DashboardLayout>
   );

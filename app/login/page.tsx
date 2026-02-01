@@ -63,7 +63,7 @@ export default function LoginPage() {
       </div>
 
       <Card className="w-full max-w-md relative z-10 border-border/50 shadow-2xl">
-        <div className="p-8">
+        <div className="p-6 sm:p-8">
           {/* Logo Section */}
           <div className="flex items-center justify-center mb-8">
             <div className="flex items-center gap-3">
