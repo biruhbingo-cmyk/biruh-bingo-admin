@@ -275,7 +275,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             {['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'].map((gameType) => {
               const count = stats.games_by_type?.[gameType] ?? 0;
-              const displayCount = Math.max(0, count - 1);
+              const displayCount = Math.max(0, count);
               return (
                 <div key={gameType} className="text-center p-3 rounded-lg bg-background/50">
                   <p className="text-xs text-muted-foreground mb-1">{gameType}</p>
