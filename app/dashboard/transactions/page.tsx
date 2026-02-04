@@ -723,6 +723,12 @@ export default function TransactionsPage() {
                                     <p className="text-xs text-muted-foreground font-mono break-all mt-1">
                                       {tx.transaction_id || tx.id.slice(0, 8) + '...'}
                                     </p>
+                                    {tx.type === 'withdraw' && tx.transaction_type && tx.transaction_id && (
+                                      <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                                        <div>Account: {tx.transaction_id}</div>
+                                        <div>Type: {tx.transaction_type}</div>
+                                      </div>
+                                    )}
                                   </div>
                                   <div className="text-right">
                                     <p className="text-lg font-bold text-foreground">{formatCurrency(tx.amount)}</p>
@@ -801,14 +807,14 @@ export default function TransactionsPage() {
                                       <button
                                         onClick={() => setSelectedTransaction(tx)}
                                         className="font-mono text-sm text-primary hover:text-primary/80 hover:underline cursor-pointer"
-                                        title="Click to view full transaction ID"
+                                        title={tx.type === 'withdraw' ? 'Click to view account details' : 'Click to view full transaction ID'}
                                       >
                                         {tx.transaction_id}
                                       </button>
                                       <button
                                         onClick={() => handleCopyTransactionId(tx.transaction_id!)}
                                         className="p-1 hover:bg-secondary rounded"
-                                        title="Copy transaction ID"
+                                        title={tx.type === 'withdraw' ? 'Copy account number' : 'Copy transaction ID'}
                                       >
                                         {copiedId === tx.transaction_id ? (
                                           <Check className="w-3 h-3 text-green-400" />
@@ -830,6 +836,12 @@ export default function TransactionsPage() {
                                 <TableCell className="text-foreground">
                                   <div className="flex flex-col">
                                     <span className="font-semibold">{formatCurrency(tx.amount)}</span>
+                                    {tx.type === 'withdraw' && tx.transaction_type && tx.transaction_id && (
+                                      <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                                        <div>Account: {tx.transaction_id}</div>
+                                        <div>Type: {tx.transaction_type}</div>
+                                      </div>
+                                    )}
                                     {tx.status === 'pending' && tx.type === 'withdraw' && userBalances[tx.user_id] !== undefined && (
                                       <span className="text-xs text-muted-foreground mt-1">
                                         Balance: {formatCurrency(userBalances[tx.user_id])}
@@ -897,13 +909,13 @@ export default function TransactionsPage() {
             {selectedTransaction && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Transaction ID</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-foreground font-mono text-sm break-all">
-                        {selectedTransaction.transaction_id || 'N/A'}
-                      </p>
-                      {selectedTransaction.transaction_id && (
+                  {selectedTransaction.type !== 'withdraw' && selectedTransaction.transaction_id && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Transaction ID</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-foreground font-mono text-sm break-all">
+                          {selectedTransaction.transaction_id}
+                        </p>
                         <button
                           onClick={() => handleCopyTransactionId(selectedTransaction.transaction_id!)}
                           className="p-1 hover:bg-secondary rounded"
@@ -915,9 +927,9 @@ export default function TransactionsPage() {
                             <Copy className="w-4 h-4 text-muted-foreground" />
                           )}
                         </button>
-                      )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Internal ID (UUID)</p>
                     <div className="flex items-center gap-2">
@@ -955,12 +967,36 @@ export default function TransactionsPage() {
                     <p className="text-xs text-muted-foreground mb-1">Status</p>
                     <div>{getStatusBadge(selectedTransaction.status)}</div>
                   </div>
-                  {selectedTransaction.transaction_type && (
+                  {selectedTransaction.type === 'withdraw' && selectedTransaction.transaction_type && selectedTransaction.transaction_id ? (
+                    <>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Account Number</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-foreground font-mono text-sm break-all">{selectedTransaction.transaction_id}</p>
+                          <button
+                            onClick={() => handleCopyTransactionId(selectedTransaction.transaction_id!)}
+                            className="p-1 hover:bg-secondary rounded"
+                            title="Copy Account Number"
+                          >
+                            {copiedId === selectedTransaction.transaction_id ? (
+                              <Check className="w-4 h-4 text-green-400" />
+                            ) : (
+                              <Copy className="w-4 h-4 text-muted-foreground" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Account Type</p>
+                        <p className="text-foreground">{selectedTransaction.transaction_type}</p>
+                      </div>
+                    </>
+                  ) : selectedTransaction.transaction_type ? (
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Transaction Type</p>
                       <p className="text-foreground">{selectedTransaction.transaction_type}</p>
                     </div>
-                  )}
+                  ) : null}
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Created At</p>
                     <p className="text-foreground text-sm">
