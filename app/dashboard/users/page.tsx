@@ -32,10 +32,10 @@ interface User {
   created_at: string;
   updated_at: string;
   wallet?: {
-    user_id: string;
-    balance: number;
-    demo_balance: number;
-    updated_at: string;
+  user_id: string;
+  balance: number;
+  demo_balance: number;
+  updated_at: string;
   };
 }
 
@@ -132,7 +132,7 @@ export default function UsersPage() {
       <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
+        <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">User Management</h1>
             <p className="text-sm sm:text-base text-muted-foreground">View and manage user accounts and wallets</p>
           </div>
@@ -376,22 +376,22 @@ export default function UsersPage() {
 
         {/* Users - Desktop Table View */}
         {!isMobile && (
-          <Card className="bg-secondary/50 border-border/50 overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b border-border/50 hover:bg-transparent">
-                    <TableHead className="text-foreground">Name</TableHead>
-                    <TableHead className="text-foreground">Telegram ID</TableHead>
-                    <TableHead className="text-foreground">Phone</TableHead>
-                    <TableHead className="text-foreground">Referral Code</TableHead>
-                    <TableHead className="text-foreground">Wallet Balance</TableHead>
+        <Card className="bg-secondary/50 border-border/50 overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b border-border/50 hover:bg-transparent">
+                  <TableHead className="text-foreground">Name</TableHead>
+                  <TableHead className="text-foreground">Telegram ID</TableHead>
+                  <TableHead className="text-foreground">Phone</TableHead>
+                  <TableHead className="text-foreground">Referral Code</TableHead>
+                  <TableHead className="text-foreground">Wallet Balance</TableHead>
                     <TableHead className="text-foreground">Role</TableHead>
-                    <TableHead className="text-foreground">Joined</TableHead>
-                    <TableHead className="text-right text-foreground">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+                  <TableHead className="text-foreground">Joined</TableHead>
+                  <TableHead className="text-right text-foreground">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                   {loading ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
@@ -399,21 +399,21 @@ export default function UsersPage() {
                       </TableCell>
                     </TableRow>
                   ) : filteredUsers.length === 0 ? (
-                    <TableRow>
+                  <TableRow>
                       <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         {searchTerm ? 'No users found matching your search' : 'No users found'}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.id} className="border-b border-border/50 hover:bg-primary/5">
+                      <TableCell className="text-foreground font-medium">
+                        {user.first_name} {user.last_name}
                       </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredUsers.map((user) => (
-                      <TableRow key={user.id} className="border-b border-border/50 hover:bg-primary/5">
-                        <TableCell className="text-foreground font-medium">
-                          {user.first_name} {user.last_name}
-                        </TableCell>
-                        <TableCell className="text-foreground font-mono">{user.telegram_id}</TableCell>
-                        <TableCell className="text-foreground">{user.phone_number}</TableCell>
-                        <TableCell className="text-foreground font-mono">{user.referal_code}</TableCell>
-                        <TableCell className="text-foreground font-bold">
+                      <TableCell className="text-foreground font-mono">{user.telegram_id}</TableCell>
+                      <TableCell className="text-foreground">{user.phone_number}</TableCell>
+                      <TableCell className="text-foreground font-mono">{user.referal_code}</TableCell>
+                      <TableCell className="text-foreground font-bold">
                           {formatCurrency(user.wallet?.balance || 0)}
                         </TableCell>
                         <TableCell className="text-foreground">
@@ -424,44 +424,44 @@ export default function UsersPage() {
                           }`}>
                             {user.role}
                           </span>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setSelectedUser(user)}
-                              >
-                                View Details
-                              </Button>
-                            </DialogTrigger>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSelectedUser(user)}
+                            >
+                              View Details
+                            </Button>
+                          </DialogTrigger>
                             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                              <DialogHeader>
-                                <DialogTitle>User Details</DialogTitle>
-                                <DialogDescription>
-                                  {selectedUser?.first_name} {selectedUser?.last_name}
-                                </DialogDescription>
-                              </DialogHeader>
-                              {selectedUser && (
-                                <div className="space-y-4">
+                            <DialogHeader>
+                              <DialogTitle>User Details</DialogTitle>
+                              <DialogDescription>
+                                {selectedUser?.first_name} {selectedUser?.last_name}
+                              </DialogDescription>
+                            </DialogHeader>
+                            {selectedUser && (
+                              <div className="space-y-4">
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                       <p className="text-xs text-muted-foreground mb-1">User ID</p>
                                       <p className="text-foreground font-mono text-sm break-all">{selectedUser.id}</p>
                                     </div>
-                                    <div>
+                                  <div>
                                       <p className="text-xs text-muted-foreground mb-1">Telegram ID</p>
-                                      <p className="text-foreground font-medium">{selectedUser.telegram_id}</p>
-                                    </div>
-                                    <div>
+                                    <p className="text-foreground font-medium">{selectedUser.telegram_id}</p>
+                                  </div>
+                                  <div>
                                       <p className="text-xs text-muted-foreground mb-1">Phone</p>
-                                      <p className="text-foreground font-medium">{selectedUser.phone_number}</p>
-                                    </div>
-                                    <div>
+                                    <p className="text-foreground font-medium">{selectedUser.phone_number}</p>
+                                  </div>
+                                  <div>
                                       <p className="text-xs text-muted-foreground mb-1">Referral Code</p>
                                       <p className="text-foreground font-mono">{selectedUser.referal_code}</p>
                                     </div>
@@ -482,20 +482,20 @@ export default function UsersPage() {
                                       <p className="text-foreground font-bold text-lg">
                                         {formatCurrency(selectedUser.wallet?.balance || 0)}
                                       </p>
-                                    </div>
-                                    <div>
+                                  </div>
+                                  <div>
                                       <p className="text-xs text-muted-foreground mb-1">Demo Balance</p>
                                       <p className="text-foreground font-medium">
                                         {formatCurrency(selectedUser.wallet?.demo_balance || 0)}
-                                      </p>
-                                    </div>
-                                    <div>
+                                    </p>
+                                  </div>
+                                  <div>
                                       <p className="text-xs text-muted-foreground mb-1">Joined</p>
-                                      <p className="text-foreground font-medium">
+                                    <p className="text-foreground font-medium">
                                         {new Date(selectedUser.created_at).toLocaleString()}
-                                      </p>
-                                    </div>
-                                    <div>
+                                    </p>
+                                  </div>
+                                  <div>
                                       <p className="text-xs text-muted-foreground mb-1">Last Updated</p>
                                       <p className="text-foreground font-medium">
                                         {new Date(selectedUser.updated_at).toLocaleString()}
@@ -504,23 +504,23 @@ export default function UsersPage() {
                                     {selectedUser.wallet && (
                                       <div>
                                         <p className="text-xs text-muted-foreground mb-1">Wallet Last Updated</p>
-                                        <p className="text-foreground font-medium">
+                                    <p className="text-foreground font-medium">
                                           {new Date(selectedUser.wallet.updated_at).toLocaleString()}
-                                        </p>
-                                      </div>
-                                    )}
+                                    </p>
                                   </div>
+                                    )}
                                 </div>
-                              )}
-                            </DialogContent>
-                          </Dialog>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                              </div>
+                            )}
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
           {/* Pagination */}
           {!loading && totalCount > 0 && (

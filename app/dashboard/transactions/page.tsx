@@ -53,6 +53,31 @@ interface TransactionsResponse {
   offset: number;
 }
 
+interface User {
+  id: string;
+  telegram_id: number;
+  first_name: string;
+  last_name: string;
+  phone_number?: string;
+  referal_code?: string;
+  role: string;
+  created_at: string;
+  updated_at: string;
+  wallet?: {
+    user_id: string;
+    balance: number;
+    demo_balance: number;
+    updated_at: string;
+  };
+}
+
+interface UsersResponse {
+  users: User[];
+  count: number;
+  limit: number;
+  offset: number;
+}
+
 export default function TransactionsPage() {
   const { token, logout } = useAuth();
   const router = useRouter();
@@ -66,6 +91,7 @@ export default function TransactionsPage() {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [userBalances, setUserBalances] = useState<Record<string, number>>({});
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (token) {
@@ -231,6 +257,9 @@ export default function TransactionsPage() {
 
       // Fetch wallet balances for pending withdrawals
       await loadUserBalances(fetchedTransactions);
+
+      // Fetch user names for all transactions
+      await loadUserNames(fetchedTransactions);
     } catch (error) {
       console.error('Failed to load transactions:', error);
       setError('Failed to load transactions. Please try again.');
@@ -335,9 +364,11 @@ export default function TransactionsPage() {
     if (searchTerm) {
       filtered = filtered.filter((tx) => {
         const searchLower = searchTerm.toLowerCase();
+        const userName = userNames[tx.user_id]?.toLowerCase() || '';
         return (
           tx.id.toLowerCase().includes(searchLower) ||
           tx.user_id.toLowerCase().includes(searchLower) ||
+          userName.includes(searchLower) ||
           tx.amount.toString().includes(searchTerm) ||
           (tx.transaction_id && tx.transaction_id.toLowerCase().includes(searchLower))
         );
@@ -460,6 +491,64 @@ export default function TransactionsPage() {
     }
   };
 
+  const loadUserNames = async (transactions: Transaction[]) => {
+    if (!token) return;
+
+    // Get unique user IDs from all transactions
+    const uniqueUserIds = [...new Set(transactions.map((tx) => tx.user_id))];
+
+    if (uniqueUserIds.length === 0) {
+      return;
+    }
+
+    try {
+      // Fetch all users in batches to get their names
+      // We'll fetch a large batch to cover all users
+      const limit = 1000; // Fetch up to 1000 users at once
+      let offset = 0;
+      const namesMap: Record<string, string> = {};
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await apiFetch(API_ENDPOINTS.admin.getAllUsers(limit, offset), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }, () => { logout(); router.push('/login'); });
+
+        if (!response.ok) {
+          break;
+        }
+
+        const data: UsersResponse = await response.json();
+        const users = data.users || [];
+
+        // Map user IDs to names
+        users.forEach((user) => {
+          if (uniqueUserIds.includes(user.id)) {
+            const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || `User ${user.telegram_id}`;
+            namesMap[user.id] = fullName;
+          }
+        });
+
+        // Check if we've found all users or if there are more to fetch
+        const foundUserIds = Object.keys(namesMap);
+        const allFound = uniqueUserIds.every((id) => foundUserIds.includes(id));
+
+        if (allFound || users.length < limit) {
+          hasMore = false;
+        } else {
+          offset += limit;
+        }
+      }
+
+      setUserNames(namesMap);
+    } catch (error) {
+      console.error('Failed to load user names:', error);
+    }
+  };
+
   const handleCopyTransactionId = async (transactionId: string) => {
     try {
       await navigator.clipboard.writeText(transactionId);
@@ -475,10 +564,10 @@ export default function TransactionsPage() {
       <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
+        <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Transactions</h1>
             <p className="text-sm sm:text-base text-muted-foreground">Manage and approve pending transactions</p>
-          </div>
+        </div>
           <Button
             variant="outline"
             size="sm"
@@ -551,12 +640,12 @@ export default function TransactionsPage() {
               </Button>
             </div>
           ) : (
-            <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="pending" className="text-xs sm:text-sm">Pending</TabsTrigger>
               <TabsTrigger value="completed" className="text-xs sm:text-sm">Completed</TabsTrigger>
               <TabsTrigger value="failed" className="text-xs sm:text-sm">Failed</TabsTrigger>
               <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
-            </TabsList>
+          </TabsList>
           )}
 
           {(['pending', 'completed', 'failed', 'all'] as const).map((status) => (
@@ -599,12 +688,12 @@ export default function TransactionsPage() {
                     </Button>
                   </div>
                 ) : (
-                  <TabsList className="grid w-full grid-cols-4 mb-6">
+                <TabsList className="grid w-full grid-cols-4 mb-6">
                     <TabsTrigger value="all" className="text-xs sm:text-sm">All Types</TabsTrigger>
                     <TabsTrigger value="deposit" className="text-xs sm:text-sm">Deposits</TabsTrigger>
                     <TabsTrigger value="withdraw" className="text-xs sm:text-sm">Withdrawals</TabsTrigger>
                     <TabsTrigger value="transfer" className="text-xs sm:text-sm">Transfers</TabsTrigger>
-                  </TabsList>
+                </TabsList>
                 )}
 
                 {(['all', 'deposit', 'withdraw', 'transfer'] as const).map((type) => (
@@ -677,18 +766,18 @@ export default function TransactionsPage() {
                       </div>
                     ) : (
                       /* Transactions - Desktop Table View */
-                      <Card className="bg-secondary/50 border-border/50 overflow-hidden">
-                        <div className="overflow-x-auto">
-                          {loading ? (
-                            <div className="p-8 text-center text-muted-foreground">
-                              Loading transactions...
-                            </div>
-                          ) : (
-                            <Table>
+        <Card className="bg-secondary/50 border-border/50 overflow-hidden">
+          <div className="overflow-x-auto">
+                    {loading ? (
+                      <div className="p-8 text-center text-muted-foreground">
+                        Loading transactions...
+                      </div>
+                    ) : (
+            <Table>
               <TableHeader>
                 <TableRow className="border-b border-border/50 hover:bg-transparent">
                   <TableHead className="text-foreground">Transaction ID</TableHead>
-                  <TableHead className="text-foreground">User ID</TableHead>
+                  <TableHead className="text-foreground">User Name</TableHead>
                   <TableHead className="text-foreground">Type</TableHead>
                   <TableHead className="text-foreground">Amount</TableHead>
                   <TableHead className="text-foreground">Status</TableHead>
@@ -732,7 +821,11 @@ export default function TransactionsPage() {
                                     <span className="font-mono text-xs text-muted-foreground">N/A</span>
                                   )}
                                 </TableCell>
-                                <TableCell className="text-foreground font-mono text-xs">{tx.user_id.slice(0, 8)}...</TableCell>
+                                <TableCell className="text-foreground">
+                                  {userNames[tx.user_id] || (
+                                    <span className="font-mono text-xs text-muted-foreground">{tx.user_id.slice(0, 8)}...</span>
+                                  )}
+                                </TableCell>
                       <TableCell className="text-foreground">{getTypeLabel(tx.type)}</TableCell>
                                 <TableCell className="text-foreground">
                                   <div className="flex flex-col">
@@ -783,9 +876,9 @@ export default function TransactionsPage() {
                 )}
               </TableBody>
             </Table>
-                          )}
-                        </div>
-                      </Card>
+                    )}
+          </div>
+        </Card>
                     )}
                   </TabsContent>
                 ))}
@@ -842,10 +935,14 @@ export default function TransactionsPage() {
                       </button>
                     </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">User ID</p>
-                    <p className="text-foreground font-mono text-xs break-all">{selectedTransaction.user_id}</p>
-                  </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">User</p>
+                      <p className="text-foreground">
+                        {userNames[selectedTransaction.user_id] || (
+                          <span className="font-mono text-xs text-muted-foreground">{selectedTransaction.user_id}</span>
+                        )}
+                      </p>
+                    </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Type</p>
                     <p className="text-foreground">{getTypeLabel(selectedTransaction.type)}</p>

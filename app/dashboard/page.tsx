@@ -93,10 +93,10 @@ export default function DashboardPage() {
 
       const startTime = Date.now();
       const response = await apiFetch(API_ENDPOINTS.admin.getDashboardStats(), {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
       }, () => {
         logout();
         router.push('/login');
@@ -203,7 +203,7 @@ export default function DashboardPage() {
       <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
+        <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Dashboard Overview</h1>
             <p className="text-sm sm:text-base text-muted-foreground">Monitor pending transactions and system metrics</p>
           </div>
@@ -261,7 +261,7 @@ export default function DashboardPage() {
             label="Total House Cut"
             value={loading ? '...' : formatCurrency(stats.total_house_cut)}
           />
-  
+
           <StatCard
             icon={<Gamepad2 className="w-6 h-6 text-primary" />}
             label="Total Games Played"
@@ -282,7 +282,7 @@ export default function DashboardPage() {
                   <p className="text-xl font-bold text-foreground">
                     {loading ? '...' : displayCount}
                   </p>
-                </div>
+              </div>
               );
             })}
           </div>
